@@ -102,3 +102,11 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# ignore helper dirs
+__pycache__/
+certification_output/
+data/
+datasets/
+pretrained_models/
+tmp_out/
