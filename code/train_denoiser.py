@@ -2,7 +2,8 @@
 # Licensed under the MIT License.
 # File for training denoisers with at most one classifier attached to
 
-from architectures import DENOISERS_ARCHITECTURES, get_architecture, IMAGENET_CLASSIFIERS
+from architectures import DENOISERS_ARCHITECTURES, get_architecture, IMAGENET_CLASSIFIERS, RESNET_SYNERGY_CLASSIFIERS
+from archs.resnet_synergy import ResNet18, ResNet, BasicBlock
 from datasets import get_dataset, DATASETS
 from test_denoiser import test, test_with_classifier
 from torch.nn import MSELoss, CrossEntropyLoss
@@ -52,6 +53,9 @@ parser.add_argument('--objective', default='denoising', type=str,
 parser.add_argument('--classifier', default='', type=str,
                     help='path to the classifier used with the `classificaiton`'
                      'or `stability` objectives of the denoiser.')
+parser.add_argument("--classifier_arch", default='', type=str, choices=RESNET_SYNERGY_CLASSIFIERS,
+                    help="The architecture of the classifier to attach to the denoiser "
+                    "in case of resnet synergy classifiers. ")
 parser.add_argument('--pretrained-denoiser', default='', type=str,
                     help='path to a pretrained denoiser')
 parser.add_argument('--optimizer', default='Adam', type=str,
@@ -153,9 +157,13 @@ def main():
             # loading pretrained imagenet architectures
             clf = get_architecture(args.classifier, args.dataset, pytorch_pretrained=True)
         else:
-            checkpoint = torch.load(args.classifier)
-            clf = get_architecture(checkpoint['arch'], 'cifar10')
-            clf.load_state_dict(checkpoint['state_dict'])
+            if args.classifier_arch in RESNET_SYNERGY_CLASSIFIERS:
+                print("Using resnet synergy classifier architecture: {}".format(args.classifier_arch))
+                clf = torch.load(args.classifier, weights_only=False)
+            else:
+                checkpoint = torch.load(args.classifier)
+                clf = get_architecture(checkpoint['arch'], 'cifar10')
+                clf.load_state_dict(checkpoint['state_dict'])
         clf.cuda().eval()
         requires_grad_(clf, False)
         criterion = CrossEntropyLoss(size_average=None, reduce=None, reduction = 'mean').cuda()

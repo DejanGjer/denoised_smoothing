@@ -11,6 +11,8 @@ import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
 
+from archs.resnet_synergy import ResNet18
+
 IMAGENET_CLASSIFIERS = [
                         'resnet18', 
                         'resnet34', 
@@ -24,6 +26,13 @@ CIFAR10_CLASSIFIERS = [
                         'DenseNet121','ResNeXt29_2x64d','MobileNet','MobileNetV2',
                         'SENet18','ShuffleNetV2','EfficientNetB0'
                         'imagenet32_resnet110', 'imagenet32_wrn',
+                        ]
+
+RESNET_SYNERGY_CLASSIFIERS = [
+                        'resnet_normal', 'resnet_negative', 'resnet_hybrid',
+                        'resnet_hybrid_neg', 'resnet_synergy_normal', 
+                        'resnet_synergy_negative', 'resnet_synergy_all',
+                        'resnet_synergy_trained_all'
                         ]
 
 CLASSIFIERS_ARCHITECTURES = IMAGENET_CLASSIFIERS + CIFAR10_CLASSIFIERS
@@ -59,6 +68,24 @@ def get_architecture(arch: str, dataset: str, pytorch_pretrained: bool=False) ->
         model = resnet_cifar(depth=110, num_classes=1000).cuda()
     elif arch == "imagenet32_wrn":
         model = WideResNet(depth=28, num_classes=1000, widen_factor=10).cuda()
+
+    ## Resnet Synergy classifiers
+    elif arch == "resnet_normal":
+        model = ResNet18('normal', num_in_channels=3, num_classes=10).cuda()
+    elif arch == "resnet_negative":
+        model = ResNet18('negative', num_in_channels=3, num_classes=10).cuda()
+    elif arch == "resnet_hybrid":
+        model = ResNet18('hybrid_nor', num_in_channels=3, num_classes=10).cuda()
+    elif arch == "resnet_hybrid_neg":
+        model = ResNet18('hybrid_neg', num_in_channels=3, num_classes=10).cuda()
+    elif arch == "resnet_synergy_normal":
+        model = ResNet18('synergy_nor', num_in_channels=3, num_classes=10).cuda()
+    elif arch == "resnet_synergy_negative":
+        model = ResNet18('synergy_neg', num_in_channels=3, num_classes=10).cuda()
+    elif arch == "resnet_synergy_all":
+        model = ResNet18('synergy_all', num_in_channels=3, num_classes=10).cuda()
+    elif arch == "resnet_synergy_trained_all":
+        model = ResNet18('tr_synergy_all', num_in_channels=3, num_classes=10).cuda()
 
     # Cifar10 Models from https://github.com/kuangliu/pytorch-cifar
     # The 14 models we use in the paper as surrogate models 
