@@ -104,6 +104,7 @@ venv.bak/
 .mypy_cache/
 
 # ignore helper dirs
+.vscode/
 __pycache__/
 certification_output/
 data/

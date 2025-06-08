@@ -1,8 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-from architectures import get_architecture, IMAGENET_CLASSIFIERS, RESNET_SYNERGY_CLASSIFIERS
-from archs.resnet_synergy import ResNet18, ResNet, BasicBlock
+from architectures import get_architecture, load_resnet_synergy, IMAGENET_CLASSIFIERS
 from datasets import get_dataset, DATASETS
 from torch.nn import MSELoss, CrossEntropyLoss
 from torch.optim import SGD, Optimizer, Adam
@@ -61,9 +60,8 @@ def main(args):
             clf = get_architecture(args.clf ,args.dataset, pytorch_pretrained=True)
         else:
             args.clf = os.path.join(os.getenv('PT_DATA_DIR', './'), args.clf)
-            if args.clf_arch in RESNET_SYNERGY_CLASSIFIERS:
-                print("Using resnet synergy classifier architecture: {}".format(args.clf_arch))
-                clf = torch.load(args.clf, weights_only=False)
+            if args.synergy:
+                clf = load_resnet_synergy(args.clf, args.dataset)
             else:
                 checkpoint = torch.load(args.clf)
                 clf = get_architecture(checkpoint['arch'], args.dataset)
@@ -212,9 +210,8 @@ if __name__ == "__main__":
                         help='Path to a denoiser ', required=True)
     parser.add_argument('--clf', type=str, default='',
                         help='Pretrained classificaiton model.', required=True)
-    parser.add_argument('--clf_arch', default='', type=str, choices=RESNET_SYNERGY_CLASSIFIERS,
-                        help="The architecture of the classifier to attach to the denoiser "
-                        "in case of resnet synergy classifiers. ")
+    parser.add_argument("--synergy", action='store_true',
+                    help="if true, uses the synergy classifier architecture (resnet18)")
     parser.add_argument('--outdir', type=str, default='tmp_out/', help='folder to save model and training log)')
     parser.add_argument('--workers', default=4, type=int, metavar='N',
                         help='number of data loading workers (default: 4)')

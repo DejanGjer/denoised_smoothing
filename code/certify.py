@@ -1,5 +1,5 @@
 # evaluate a smoothed classifier on a dataset
-from architectures import get_architecture, IMAGENET_CLASSIFIERS, RESNET_SYNERGY_CLASSIFIERS
+from architectures import get_architecture, load_resnet_synergy, IMAGENET_CLASSIFIERS
 from archs.resnet_synergy import ResNet18, ResNet, BasicBlock
 from core import Smooth
 from datasets import get_dataset, DATASETS, get_num_classes
@@ -13,8 +13,8 @@ import torch
 parser = argparse.ArgumentParser(description='Certify many examples')
 parser.add_argument("--dataset", choices=DATASETS, help="which dataset")
 parser.add_argument("--base_classifier", type=str, help="path to saved pytorch model of base classifier")
-parser.add_argument("--base_classifier_arch", default='', type=str, choices=RESNET_SYNERGY_CLASSIFIERS,
-                        help="the architecture of the base classifier, if not a path to a saved model")
+parser.add_argument("--synergy", action='store_true',
+                    help="if true, uses the synergy classifier architecture (resnet18)")
 parser.add_argument("--sigma", type=float, help="noise hyperparameter")
 parser.add_argument("--outfile", type=str, help="output file")
 parser.add_argument("--batch", type=int, default=1000, help="batch size")
@@ -47,9 +47,8 @@ if __name__ == "__main__":
         # loading pretrained imagenet architectures
         base_classifier = get_architecture(args.base_classifier ,args.dataset, pytorch_pretrained=True)
     else:
-        if args.base_classifier_arch in RESNET_SYNERGY_CLASSIFIERS:
-            print("Using resnet synergy classifier architecture: {}".format(args.base_classifier_arch))
-            base_classifier = torch.load(args.base_classifier, weights_only=False)
+        if args.synergy:
+            clf = load_resnet_synergy(args.clf, args.dataset)
         else:
             checkpoint = torch.load(args.base_classifier)
             base_classifier = get_architecture(checkpoint['arch'], args.dataset)

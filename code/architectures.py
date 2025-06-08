@@ -3,6 +3,7 @@ from archs.dncnn import DnCNN
 from archs.cifar_resnet import resnet as resnet_cifar
 from archs.memnet import MemNet
 from archs.wrn import WideResNet
+import archs.resnet18
 from datasets import get_normalize_layer, get_input_center_layer
 from torch.nn.functional import interpolate
 from torchvision.models.resnet import resnet18, resnet34, resnet50
@@ -10,8 +11,11 @@ from torchvision.models.resnet import resnet18, resnet34, resnet50
 import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
+import sys
 
-from archs.resnet_synergy import ResNet18
+# Create a fake 'resnet18' module for unpickling
+sys.modules['resnet18'] = archs.resnet18
+
 
 IMAGENET_CLASSIFIERS = [
                         'resnet18', 
@@ -141,3 +145,15 @@ def get_architecture(arch: str, dataset: str, pytorch_pretrained: bool=False) ->
 
     normalize_layer = get_normalize_layer(dataset)
     return torch.nn.Sequential(normalize_layer, model)
+
+def load_resnet_synergy(checkpoint: str, dataset: str) -> torch.nn.Module:
+    """ Load a ResNet Synergy architecture with pretrained weights if available.
+    
+    :param checkpoint: path to the checkpoint file
+    :param dataset: the dataset - should be in the datasets.DATASETS list
+    :return: a Pytorch module with the ResNet Synergy architecture
+    """
+    model = torch.load(checkpoint, weights_only=False)
+    normalize_layer = get_normalize_layer(dataset)
+    return torch.nn.Sequential(normalize_layer, model)
+  
