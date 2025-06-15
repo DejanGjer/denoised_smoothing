@@ -41,7 +41,7 @@ RESNET_SYNERGY_CLASSIFIERS = [
 
 CLASSIFIERS_ARCHITECTURES = IMAGENET_CLASSIFIERS + CIFAR10_CLASSIFIERS
 
-DENOISERS_ARCHITECTURES = ["cifar_dncnn", "cifar_dncnn_wide", "memnet", # cifar10 denoisers
+DENOISERS_ARCHITECTURES = ["cifar_dncnn", "cifar_dncnn_wide", "mnist_dncnn", "memnet", # cifar10 denoisers
                             'imagenet_dncnn', 'imagenet_memnet' # imagenet denoisers
                         ]
 
@@ -128,6 +128,9 @@ def get_architecture(arch: str, dataset: str, pytorch_pretrained: bool=False) ->
         return model
     elif arch == "cifar_dncnn_wide":
         model = DnCNN(image_channels=3, depth=17, n_channels=128).cuda()
+        return model
+    elif arch == 'mnist_dncnn':
+        model = DnCNN(image_channels=1, depth=17, n_channels=64).cuda()
         return model
     elif arch == 'memnet':
         model = MemNet(in_channels=3, channels=64, num_memblock=3, num_resblock=6).cuda()

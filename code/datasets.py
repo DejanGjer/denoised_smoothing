@@ -17,7 +17,7 @@ import torch
 IMAGENET_LOC_ENV = "IMAGENET_DIR"
 
 # list of all datasets
-DATASETS = ["imagenet", "imagenet32", "cifar10", "cifar100"]
+DATASETS = ["imagenet", "imagenet32", "cifar10", "cifar100", "mnist"]
 
 
 def get_dataset(dataset: str, split: str) -> Dataset:
@@ -33,6 +33,9 @@ def get_dataset(dataset: str, split: str) -> Dataset:
     
     elif dataset == "cifar100":
         return _cifar100(split)
+    
+    elif dataset == "mnist":
+        return _mnist(split)
 
 
 
@@ -40,7 +43,7 @@ def get_num_classes(dataset: str):
     """Return the number of classes in the dataset. """
     if dataset == "imagenet":
         return 1000
-    elif dataset == "cifar10":
+    elif dataset == "cifar10" or dataset == "mnist":
         return 10
     elif dataset == "cifar100":
         return 100
@@ -54,6 +57,8 @@ def get_normalize_layer(dataset: str) -> torch.nn.Module:
         return NormalizeLayer(_CIFAR10_MEAN, _CIFAR10_STDDEV)
     elif dataset == "cifar100":
         return NormalizeLayer(_CIFAR100_MEAN, _CIFAR100_STDDEV)
+    elif dataset == "mnist":
+        return NormalizeLayer(_MNIST_MEAN, _MNIST_STDDEV)
     elif dataset == "imagenet32":
         return NormalizeLayer(_IMAGENET_MEAN, _IMAGENET_STDDEV)
 
@@ -66,6 +71,8 @@ def get_input_center_layer(dataset: str) -> torch.nn.Module:
         return InputCenterLayer(_CIFAR10_MEAN)
     elif dataset == "cifar100":
         return InputCenterLayer(_CIFAR100_MEAN)
+    elif dataset == "mnist":
+        return InputCenterLayer(_MNIST_MEAN)
 
 
 _IMAGENET_MEAN = [0.485, 0.456, 0.406]
@@ -76,6 +83,9 @@ _CIFAR10_STDDEV = [0.2023, 0.1994, 0.2010]
 
 _CIFAR100_MEAN = [0.5071, 0.4865, 0.4409]
 _CIFAR100_STDDEV = [0.2673, 0.2564, 0.2762]
+
+_MNIST_MEAN = [0.1307]
+_MNIST_STDDEV = [0.3081]
 
 
 def _cifar10(split: str) -> Dataset:
@@ -101,6 +111,19 @@ def _cifar100(split: str) -> Dataset:
         ]))
     elif split == "test":
         return datasets.CIFAR100(dataset_path, train=False, download=True, transform=transforms.ToTensor())
+    else:
+        raise Exception("Unknown split name.")
+    
+def _mnist(split: str) -> Dataset:
+    dataset_path = os.path.join(os.getenv('PT_DATA_DIR', 'datasets'), 'dataset_cache')
+    if split == "train":
+        return datasets.MNIST(dataset_path, train=True, download=True, transform=transforms.Compose([
+            transforms.RandomCrop(28, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor()
+        ]))
+    elif split == "test":
+        return datasets.MNIST(dataset_path, train=False, download=True, transform=transforms.ToTensor())
     else:
         raise Exception("Unknown split name.")
 

@@ -99,8 +99,8 @@ def main():
     test_loader = DataLoader(test_dataset, shuffle=False, batch_size=args.batch,
                              num_workers=args.workers, pin_memory=pin_memory)
     ## This is used to test the performance of the denoiser attached to a cifar10 classifier
-    cifar10_test_loader = DataLoader(get_dataset('cifar10', 'test'), shuffle=False, batch_size=args.batch,
-                             num_workers=args.workers, pin_memory=pin_memory)
+    # cifar10_test_loader = DataLoader(get_dataset('cifar10', 'test'), shuffle=False, batch_size=args.batch,
+    #                          num_workers=args.workers, pin_memory=pin_memory)
 
     if args.pretrained_denoiser:
         checkpoint = torch.load(args.pretrained_denoiser)
@@ -179,7 +179,7 @@ def main():
                 test_loss, test_acc = test_with_classifier(test_loader, denoiser, criterion, args.noise_sd, args.print_freq, clf)
             else:
                 # This is needed so that cifar10 denoisers trained using imagenet32 are still evaluated on the cifar10 testset
-                test_loss, test_acc = test_with_classifier(cifar10_test_loader, denoiser, criterion, args.noise_sd, args.print_freq, clf)
+                test_loss, test_acc = test_with_classifier(test_loader, denoiser, criterion, args.noise_sd, args.print_freq, clf)
 
         after = time.time()
 
