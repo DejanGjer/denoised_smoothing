@@ -87,6 +87,24 @@ _CIFAR100_STDDEV = [0.2673, 0.2564, 0.2762]
 _MNIST_MEAN = [0.1307]
 _MNIST_STDDEV = [0.3081]
 
+def normalize(tensor, dataset_name: str):
+    """ Normalize a tensor using the dataset's mean and stddev"""
+    if dataset_name == "imagenet":
+        mean = torch.tensor(_IMAGENET_MEAN).view(1, 3, 1, 1).to(tensor.device)
+        stddev = torch.tensor(_IMAGENET_STDDEV).view(1, 3, 1, 1).to(tensor.device)
+    elif dataset_name == "cifar10":
+        mean = torch.tensor(_CIFAR10_MEAN).view(1, 3, 1, 1).to(tensor.device)
+        stddev = torch.tensor(_CIFAR10_STDDEV).view(1, 3, 1, 1).to(tensor.device)
+    elif dataset_name == "cifar100":
+        mean = torch.tensor(_CIFAR100_MEAN).view(1, 3, 1, 1).to(tensor.device)
+        stddev = torch.tensor(_CIFAR100_STDDEV).view(1, 3, 1, 1).to(tensor.device)
+    elif dataset_name == "mnist":
+        mean = torch.tensor(_MNIST_MEAN).view(1, 1, 1, 1).to(tensor.device)
+        stddev = torch.tensor(_MNIST_STDDEV).view(1, 1, 1, 1).to(tensor.device)
+    else:
+        raise Exception("Unknown dataset name.")
+    return (tensor - mean) / stddev
+
 
 def _cifar10(split: str) -> Dataset:
     dataset_path = os.path.join(os.getenv('PT_DATA_DIR', 'datasets'), 'dataset_cache')

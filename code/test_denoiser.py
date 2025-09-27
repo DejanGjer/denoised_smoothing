@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 from architectures import get_architecture, load_resnet_synergy, IMAGENET_CLASSIFIERS
-from datasets import get_dataset, DATASETS
+from datasets import get_dataset, DATASETS, normalize
 from torch.nn import MSELoss, CrossEntropyLoss
 from torch.optim import SGD, Optimizer, Adam
 from torch.optim.lr_scheduler import StepLR
@@ -61,7 +61,7 @@ def main(args):
         else:
             args.clf = os.path.join(os.getenv('PT_DATA_DIR', './'), args.clf)
             if args.synergy:
-                clf = load_resnet_synergy(args.clf, args.dataset)
+                clf = load_resnet_synergy(args.clf)
             else:
                 checkpoint = torch.load(args.clf)
                 clf = get_architecture(checkpoint['arch'], args.dataset)
@@ -83,7 +83,8 @@ def main(args):
 
     return results
 
-def test(loader: DataLoader, model: torch.nn.Module, criterion, noise_sd: float, print_freq: int, outdir: str):
+def test(loader: DataLoader, model: torch.nn.Module, criterion, noise_sd: float, print_freq: int, outdir: str, 
+         dataset_name: str="cifar10") -> float:
     """
     A function to test the denoising performance of a denoiser (i.e. MSE objective)
         :param loader:DataLoader: test dataloader
@@ -111,9 +112,10 @@ def test(loader: DataLoader, model: torch.nn.Module, criterion, noise_sd: float,
 
             # augment inputs with noise
             noise = torch.randn_like(inputs, device='cuda') * noise_sd
+            noised_inputs = normalize(inputs + noise, dataset_name)
 
-            outputs = model(inputs + noise)
-            loss = criterion(outputs, inputs)
+            outputs = model(noised_inputs)
+            loss = criterion(outputs, normalize(inputs, dataset_name))
 
             # record loss
             losses.update(loss.item(), inputs.size(0))
@@ -141,7 +143,8 @@ def test(loader: DataLoader, model: torch.nn.Module, criterion, noise_sd: float,
         return losses.avg
 
 
-def test_with_classifier(loader: DataLoader, denoiser: torch.nn.Module, criterion, noise_sd: float, print_freq: int, classifier: torch.nn.Module):
+def test_with_classifier(loader: DataLoader, denoiser: torch.nn.Module, criterion, noise_sd: float, print_freq: int, 
+                         classifier: torch.nn.Module, dataset_name: str="cifar10"):
     """
     A function to test the classification performance of a denoiser when attached to a given classifier
         :param loader:DataLoader: test dataloader
@@ -175,7 +178,7 @@ def test_with_classifier(loader: DataLoader, denoiser: torch.nn.Module, criterio
             inputs = inputs + torch.randn_like(inputs, device='cuda') * noise_sd
 
             if denoiser is not None:
-                inputs = denoiser(inputs)
+                inputs = denoiser(normalize(inputs, dataset_name))
             # compute output
             outputs = classifier(inputs)
             loss = criterion(outputs, targets)
