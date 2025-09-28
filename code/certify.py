@@ -2,7 +2,7 @@
 from architectures import get_architecture, load_resnet_synergy, IMAGENET_CLASSIFIERS
 import archs.resnet18
 from core import Smooth
-from datasets import get_dataset, DATASETS, get_num_classes
+from datasets import get_dataset, DATASETS, get_num_classes, normalize
 from time import time
 
 import argparse
@@ -48,7 +48,7 @@ if __name__ == "__main__":
         base_classifier = get_architecture(args.base_classifier ,args.dataset, pytorch_pretrained=True)
     else:
         if args.synergy:
-            base_classifier = load_resnet_synergy(args.base_classifier, args.dataset)
+            base_classifier = load_resnet_synergy(args.base_classifier)
         else:
             checkpoint = torch.load(args.base_classifier)
             base_classifier = get_architecture(checkpoint['arch'], args.dataset)
@@ -92,6 +92,7 @@ if __name__ == "__main__":
 
         before_time = time()
         # certify the prediction of g around x
+        x = normalize(x, args.dataset)
         x = x.cuda()
         prediction, radius = smoothed_classifier.certify(x, args.N0, args.N, args.alpha, args.batch)
         after_time = time()

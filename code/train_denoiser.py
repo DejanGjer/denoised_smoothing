@@ -250,21 +250,19 @@ def train(loader: DataLoader, denoiser: torch.nn.Module, criterion, optimizer: O
         inputs = inputs.cuda()
         targets = targets.cuda()
 
-        # augment inputs with noise
-        noise = torch.randn_like(inputs, device='cuda') * noise_sd
-
         # compute output
-        noised_inputs = normalize(inputs + noise, dataset_name)
-        outputs = denoiser(noised_inputs)
+        inputs = normalize(inputs, dataset_name)
+        noise = torch.randn_like(inputs, device='cuda') * noise_sd
+        outputs = denoiser(inputs + noise)
         if classifier:
             outputs = classifier(outputs)
         
         if isinstance(criterion, MSELoss):
-            loss = criterion(outputs, normalize(inputs, dataset_name))
+            loss = criterion(outputs, inputs)
         elif isinstance(criterion, CrossEntropyLoss):
             if args.objective == 'stability':
                 with torch.no_grad():
-                    targets = classifier(normalize(inputs, dataset_name))
+                    targets = classifier(inputs)
                     targets = targets.argmax(1).detach().clone()
             loss = criterion(outputs, targets)
 

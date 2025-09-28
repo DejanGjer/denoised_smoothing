@@ -110,12 +110,12 @@ def test(loader: DataLoader, model: torch.nn.Module, criterion, noise_sd: float,
             inputs = inputs.cuda()
             targets = targets.cuda()
 
+            inputs = normalize(inputs, dataset_name)
             # augment inputs with noise
             noise = torch.randn_like(inputs, device='cuda') * noise_sd
-            noised_inputs = normalize(inputs + noise, dataset_name)
 
-            outputs = model(noised_inputs)
-            loss = criterion(outputs, normalize(inputs, dataset_name))
+            outputs = model(inputs + noise)
+            loss = criterion(outputs, inputs)
 
             # record loss
             losses.update(loss.item(), inputs.size(0))
@@ -174,11 +174,12 @@ def test_with_classifier(loader: DataLoader, denoiser: torch.nn.Module, criterio
             inputs = inputs.cuda()
             targets = targets.cuda()
 
+            inputs = normalize(inputs, dataset_name)
             # augment inputs with noise
-            inputs = inputs + torch.randn_like(inputs, device='cuda') * noise_sd
+            inputs += torch.randn_like(inputs, device='cuda') * noise_sd
 
             if denoiser is not None:
-                inputs = denoiser(normalize(inputs, dataset_name))
+                inputs = denoiser(inputs)
             # compute output
             outputs = classifier(inputs)
             loss = criterion(outputs, targets)
