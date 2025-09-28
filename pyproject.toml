@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "denoised-smoothing"   # distribution name (can keep dash)
+version = "0.1.0"
+description = "Your submodule description"
+authors = [{name="You", email="you@example.com"}]
+readme = "README.md"
+requires-python = ">=3.8"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["denoised_smoothing*", "code*"]
+
+[tool.setuptools.package-data]
+"*" = ["*"]
