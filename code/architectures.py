@@ -146,11 +146,10 @@ def get_architecture(arch: str, dataset: str, pytorch_pretrained: bool=False) ->
     else:
         raise Exception('Unknown architecture.')
 
-    # normalize_layer = get_normalize_layer(dataset)
-    # return torch.nn.Sequential(normalize_layer, model)
-    return model
+    normalize_layer = get_normalize_layer(dataset)
+    return torch.nn.Sequential(normalize_layer, model)
 
-def load_resnet_synergy(checkpoint: str) -> torch.nn.Module:
+def load_resnet_synergy(checkpoint: str, dataset: str) -> torch.nn.Module:
     """ Load a ResNet Synergy architecture with pretrained weights if available.
     
     :param checkpoint: path to the checkpoint file
@@ -158,7 +157,6 @@ def load_resnet_synergy(checkpoint: str) -> torch.nn.Module:
     :return: a Pytorch module with the ResNet Synergy architecture
     """
     model = torch.load(checkpoint, weights_only=False)
-    # normalize_layer = get_normalize_layer(dataset)
-    # return torch.nn.Sequential(normalize_layer, model)
-    return model
+    normalize_layer = get_normalize_layer(dataset)
+    return torch.nn.Sequential(normalize_layer, model)
   

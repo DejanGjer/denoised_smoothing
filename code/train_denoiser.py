@@ -4,7 +4,7 @@
 
 from architectures import DENOISERS_ARCHITECTURES, load_resnet_synergy, get_architecture, IMAGENET_CLASSIFIERS
 import archs.resnet18
-from datasets import get_dataset, DATASETS, normalize
+from datasets import get_dataset, DATASETS
 from test_denoiser import test, test_with_classifier
 from torch.nn import MSELoss, CrossEntropyLoss
 from torch.optim import SGD, Optimizer, Adam
@@ -157,7 +157,7 @@ def main():
             clf = get_architecture(args.classifier, args.dataset, pytorch_pretrained=True)
         else:
             if args.synergy:
-                clf = load_resnet_synergy(args.classifier)
+                clf = load_resnet_synergy(args.classifier, args.dataset)
             else:
                 checkpoint = torch.load(args.classifier)
                 clf = get_architecture(checkpoint['arch'], 'cifar10')
@@ -170,16 +170,16 @@ def main():
     for epoch in range(starting_epoch, args.epochs):
         before = time.time()
         if args.objective == 'denoising':
-            train_loss = train(train_loader, denoiser, criterion, optimizer, epoch, args.noise_sd, dataset_name=args.dataset)
+            train_loss = train(train_loader, denoiser, criterion, optimizer, epoch, args.noise_sd)
             test_loss = test(test_loader, denoiser, criterion, args.noise_sd, args.print_freq, args.outdir)
             test_acc = 'NA'
         elif args.objective in ['classification', 'stability']:
-            train_loss = train(train_loader, denoiser, criterion, optimizer, epoch, args.noise_sd, clf, dataset_name=args.dataset)
+            train_loss = train(train_loader, denoiser, criterion, optimizer, epoch, args.noise_sd, clf)
             if args.dataset == 'imagenet': 
-                test_loss, test_acc = test_with_classifier(test_loader, denoiser, criterion, args.noise_sd, args.print_freq, clf, dataset_name=args.dataset)
+                test_loss, test_acc = test_with_classifier(test_loader, denoiser, criterion, args.noise_sd, args.print_freq, clf)
             else:
                 # This is needed so that cifar10 denoisers trained using imagenet32 are still evaluated on the cifar10 testset
-                test_loss, test_acc = test_with_classifier(test_loader, denoiser, criterion, args.noise_sd, args.print_freq, clf, dataset_name=args.dataset)
+                test_loss, test_acc = test_with_classifier(test_loader, denoiser, criterion, args.noise_sd, args.print_freq, clf)
 
         after = time.time()
 
@@ -220,8 +220,7 @@ def main():
 
 
 
-def train(loader: DataLoader, denoiser: torch.nn.Module, criterion, optimizer: Optimizer, epoch: int, noise_sd: float, 
-          classifier: torch.nn.Module=None, dataset_name: str="cifar10") -> float:
+def train(loader: DataLoader, denoiser: torch.nn.Module, criterion, optimizer: Optimizer, epoch: int, noise_sd: float, classifier: torch.nn.Module=None):
     """
     Function for training denoiser for one epoch
         :param loader:DataLoader: training dataloader
@@ -254,17 +253,16 @@ def train(loader: DataLoader, denoiser: torch.nn.Module, criterion, optimizer: O
         noise = torch.randn_like(inputs, device='cuda') * noise_sd
 
         # compute output
-        noised_inputs = normalize(inputs + noise, dataset_name)
-        outputs = denoiser(noised_inputs)
+        outputs = denoiser(inputs + noise)
         if classifier:
             outputs = classifier(outputs)
         
         if isinstance(criterion, MSELoss):
-            loss = criterion(outputs, normalize(inputs, dataset_name))
+            loss = criterion(outputs, inputs)
         elif isinstance(criterion, CrossEntropyLoss):
             if args.objective == 'stability':
                 with torch.no_grad():
-                    targets = classifier(normalize(inputs, dataset_name))
+                    targets = classifier(inputs)
                     targets = targets.argmax(1).detach().clone()
             loss = criterion(outputs, targets)
 
